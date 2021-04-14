@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Expression Calculator</title>
+    <link rel="stylesheet" href="assets/w3.css" />
+
+    <style>
+        body {
+            font-family: "Roboto", sans-serif;
+        }
+        span{
+            word-break: break-all;
+        }
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            font-family: Helvetica, Arial, sans-serif;
+        }
+
+        .w3-bar-block .w3-bar-item {
+            padding: 16px;
+            font-weight: bold;
+        }
+
+        .no-outline:focus {
+            outline: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div>
+        <header class="w3-container w3-card w3-center" style="padding: 8px">
+            <h2 class="w3-xlarge w3-text-dark-gray" style="font-weight: bold">
+                Realtime Expression Calculator
+            </h2>
+            <h6 class="w3-text-light-gray"></h6>
+        </header>
+
+        <!-- style="padding: 22px 32px" -->
+        <div class="w3-container" style="padding: 8px 12px">
+            <div class="w3-row" style="min-height:80vh;">
+                <div class="w3-col m6 w3-border w3-light-grey">
+
+                    <div class="w3-container" style="min-height: 80vh;">
+                        <div style="min-height: 100px;">
+                            &nbsp;
+                        </div>
+                        <div id="username_invalid" style="display: none;">
+                            <b><label for="username">Your Name:</label></b>
+                            <input type="text" name="username" id="username">
+                            <br>
+                            <input id="next_btn"
+                                class="w3-round w3-margin  w3-blue w3-hover-blue-gray no-outline w3-button"
+                                type="submit" value="Next">
+
+                        </div>
+
+                        <div id="username_valid" style="display: none;">
+                            <h3 class="w3-text-dark-gray" id="username_holder">Welcome,</h3>
+                            <b><label for="expression">Your expression:</label></b><br>
+                            <input
+                                class="w3-input w3-border no-outline w3-round-medium w3-border-blue w3-hover-border-blue-gray"
+                                type="text" placeholder="Enter your expression and press enter..." name="expression"
+                                id="expression" />
+                            <br>
+                            <input id="submit-btn" class="w3-button w3-blue no-outline w3-hover-blue-gray w3-round"
+                                type="button" value="Submit">
+
+                            <br>
+                            <p id="result">
+
+                            </p>
+                        </div>
+
+                    </div>
+
+
+
+                </div>
+
+                <div class="w3-col m6">
+                    <div class="w3-container">
+                        <h3>History</h3>
+                        <div id="history">
+
+                            <ul class="w3-ul" style="list-style: none;" id="history_list">
+
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+    <script src="assets/math.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.3.3/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.3.2/firebase-database.js"></script>
+
+    <script>
+        // Your web app's Firebase configuration
+        var firebaseConfig = {
+            apiKey: "AIzaSyBHPlE_SnnHECgbBw7ZYCiLZcxC51mwVFE",
+            authDomain: "realtime-expression.firebaseapp.com",
+            databaseURL: "https://realtime-expression-default-rtdb.firebaseio.com",
+            projectId: "realtime-expression",
+            storageBucket: "realtime-expression.appspot.com",
+            messagingSenderId: "746703594852",
+            appId: "1:746703594852:web:c8e6c587a88f468f890671",
+        };
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+    </script>
+
+    <script>
+
+        // get the database handle
+        const db = firebase.database();
+        var username;
+
+
+        // cookies
+        function setCookie(cname, cvalue, exdays = 365) {
+            var d = new Date();
+            d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+            var expires = "expires=" + d.toUTCString();
+            document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/" + ";";
+        }
+
+        function getCookie(cname) {
+            var name = cname + "=";
+            var ca = document.cookie.split(';');
+            for (var i = 0; i < ca.length; i++) {
+                var c = ca[i];
+                while (c.charAt(0) == ' ') {
+                    c = c.substring(1);
+                }
+                if (c.indexOf(name) == 0) {
+                    return c.substring(name.length, c.length);
+                }
+            }
+            return "";
+        }
+
+        function isCookieEnabled() {
+            return navigator.cookieEnabled;
+        }
+
+        if (isCookieEnabled()) {
+            if (getCookie('username') != "") {
+
+                username = getCookie('username');
+            }
+        }
+
+
+        if (!username) {
+
+            document.getElementById('username_invalid').style.display = 'block';
+        } else {
+            document.getElementById('username_valid').style.display = 'block';
+            document.getElementById('username_holder').innerHTML += username;
+        }
+
+
+
+        document.getElementById('next_btn').addEventListener('click', validateUsername);
+        document.getElementById('username').addEventListener('keypress', validateUsername);
+
+
+        function validateUsername(e) {
+            if (e.target.id == 'username' && e.key != 'Enter')
+                return;
+
+            var input_name = document.getElementById('username').value;
+
+            if (input_name == "") {
+                alert("Enter a valid name.")
+                return;
+            }
+            username = input_name;
+            setCookie('username', username, 30);
+            document.getElementById('username_holder').innerHTML += username;
+
+            document.getElementById('username_valid').style.display = 'block';
+            document.getElementById('username_invalid').style.display = 'none';
+
+        }
+
+
+        function isValidMathExpression(expr) {
+            try {
+                math.parse(expr);
+                return true;
+            }
+            catch (ex) {
+                return false;
+            }
+        }
+
+
+        document.getElementById('expression').addEventListener('keypress', processExpression);
+        document.getElementById('submit-btn').addEventListener('click', processExpression);
+
+
+        function processExpression(e) {
+            //e.preventDefault();
+            if (e.target.id == 'expression' && e.key != 'Enter')
+                return;
+
+            const resultElem = document.getElementById('result');
+
+            const timestamp = Date.now();
+            const expInput = document.getElementById("expression");
+            const message = expInput.value;
+
+            if (message == '') {
+
+                resultElem.innerHTML = `
+                    <span class="w3-text-red">
+                        Expression can not be empty!
+                        </span>`
+                return;
+            }
+
+            try {
+                var math_result = math.evaluate(message);
+                resultElem.innerHTML = '<span class="w3-xxlarge w3-text-dark-gray"> '+message+' = ' + math_result + '</span>'
+            } catch {
+                resultElem.innerHTML = `
+                    <span class="w3-text-red">
+                        Invalid expression.!
+                        </span>
+
+                    `
+                return;
+            }
+
+
+
+            expInput.value = "";
+            db.ref("messages/" + timestamp).set({
+                usr: username,
+                msg: message,
+            });
+        }
+
+
+        const targetNode = document.getElementById('history_list');
+        const config = { attributes: true, childList: true, subtree: true };
+        const callback = function (mutationsList, observer) {
+            // Use traditional 'for loops' for IE 11
+            for (const mutation of mutationsList) {
+                if (mutation.type === 'childList') {
+                    while (document.querySelectorAll('#history_list>li').length > 10) {
+                        targetNode.removeChild(targetNode.childNodes[0]);
+                    }
+                    //console.log('A child node has been added or removed.');
+                }
+                else if (mutation.type === 'attributes') {
+                    //console.log('The ' + mutation.attributeName + ' attribute was modified.');
+                }
+            }
+        };
+        const observer = new MutationObserver(callback);
+        observer.observe(targetNode, config);
+
+
+        // for updating
+        const fetchChat = db.ref("messages/").limitToLast(10);
+        fetchChat.on("child_added", function (snapshot) {
+            const messages = snapshot.val();
+            const msg = '<li><span class="w3-text-gray">' + messages.usr + "</span> : " + messages.msg + ' = '+math.evaluate(messages.msg)+ "</li>";
+            document.getElementById("history_list").innerHTML += msg;
+        });
+
+    </script>
+
+
+</body>
+
+</html>
